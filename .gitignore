@@ -1,0 +1,10 @@
+themes/*
+!themes/.gitkeep
+plugins/*
+!plugins/.gitkeep
+public/*
+!public/.gitkeep
+uploads/*
+!uploads/.gitkeep
+
+.DS_Store

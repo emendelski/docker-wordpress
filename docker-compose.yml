@@ -1,0 +1,59 @@
+version: '2'
+services:
+    wordpress:
+        build:
+            context: ./
+            dockerfile: ./Dockerfile
+        links:
+            - db:mysql
+            - mailhog
+        ports:
+            - 8080:80
+        domainname: env.localhost
+        hostname: env
+        volumes:
+            - ./public:/var/www/html
+            - ./plugins:/var/www/html/wp-content/plugins
+            - ./themes:/var/www/html/wp-content/themes
+            - ./uploads:/var/www/html/wp-content/uploads
+            - ./wp.sh:/var/www/html/wp.sh
+            - ./phpconf.ini:/usr/local/etc/php/conf.d/phpconf.ini
+        environment:
+            WORDPRESS_DB_PASSWORD: docker
+        depends_on:
+            - mailhog
+            - db
+
+    mailhog:
+        image: mailhog/mailhog
+        ports:
+            - 1025:1025
+            - 8025:8025
+
+    wpcli:
+        image: tatemz/wp-cli
+        volumes_from:
+            - wordpress
+        links:
+            - db:mysql
+        command: "sh wp.sh"
+
+    db:
+        image: mysql:5.7
+        ports:
+            - 3308:3306
+        environment:
+            MYSQL_ROOT_PASSWORD: docker
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        container_name: phpmyadmin
+        links:
+            - db:mysql
+        ports:
+            - 8181:80
+        restart: always
+        environment:
+            MYSQL_USERNAME: root
+            MYSQL_ROOT_PASSWORD: docker
+            MYSQL_PORT_3306_TCP_ADDR: db
