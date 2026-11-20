@@ -51,8 +51,11 @@ jobs:
       - name: Mail is captured by Mailpit
         run: |
           docker compose exec -T wordpress php -r 'exit(mail("ci@example.test", "CI mail", "Hello") ? 0 : 1);'
+          docker compose run --rm -T wpcli wp eval 'exit(wp_mail("ci@example.test", "CI wp_mail", "Hello") ? 0 : 1);'
           sleep 2
-          curl --fail --silent http://localhost:8025/api/v1/messages | grep -q '"Subject":"CI mail"'
+          messages="$(curl --fail --silent http://localhost:8025/api/v1/messages)"
+          grep -q '"Subject":"CI mail"' <<< "$messages"
+          grep -q '"Subject":"CI wp_mail"' <<< "$messages"
 
       - name: Show logs on failure
         if: failure()

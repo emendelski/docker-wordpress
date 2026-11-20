@@ -28,6 +28,7 @@ services:
       - ./plugins:/var/www/html/wp-content/plugins
       - ./themes:/var/www/html/wp-content/themes
       - ./uploads:/var/www/html/wp-content/uploads
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./phpconf.ini:/usr/local/etc/php/conf.d/phpconf.ini
     extra_hosts:
       # Lets Xdebug reach the IDE on Linux hosts too (built in on Docker Desktop).
@@ -69,6 +70,7 @@ services:
       - ./plugins:/var/www/html/wp-content/plugins
       - ./themes:/var/www/html/wp-content/themes
       - ./uploads:/var/www/html/wp-content/uploads
+      - ./mu-plugins:/var/www/html/wp-content/mu-plugins
       - ./wp.sh:/usr/local/bin/wp.sh:ro
     environment:
       <<: *wordpress-env

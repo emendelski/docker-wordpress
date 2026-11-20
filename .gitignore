@@ -6,6 +6,8 @@ public/*
 !public/.gitkeep
 uploads/*
 !uploads/.gitkeep
+mu-plugins/*
+!mu-plugins/docker-mail.php
 
 .DS_Store
 .env

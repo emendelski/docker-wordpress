@@ -59,7 +59,8 @@ commands that keep the project's dependencies in place there.
 ## Mail
 
 PHP `mail()` and `wp_mail()` are delivered to [Mailpit](https://mailpit.axllent.org/) instead of
-real recipients, both from the site and from WP-CLI. Open http://localhost:8025 to read them.
+real recipients, both from the site and from WP-CLI. `mu-plugins/docker-mail.php` replaces WordPress's default
+sender `wordpress@localhost`, which PHPMailer rejects as invalid, with `wordpress@localhost.test`. Open http://localhost:8025 to read them.
 
 ## Xdebug
 
@@ -97,6 +98,7 @@ docker compose run --rm wpcli wp core update-db
 - `plugins/` – project plugins, mounted as `wp-content/plugins/`
 - `themes/` – project themes, mounted as `wp-content/themes/`
 - `uploads/` – media, mounted as `wp-content/uploads/`
+- `mu-plugins/` – must-use plugins, mounted as `wp-content/mu-plugins/`
 - `compose.yaml` – services and configuration
 - `Dockerfile` – WordPress image with soap, Xdebug and Mailpit's sendmail (`wordpress` target)
   and the WP-CLI image with the same sendmail setup (`cli` target)
