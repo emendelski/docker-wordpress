@@ -1,36 +1,22 @@
-FROM wordpress:php7.0
-RUN curl --location --output /usr/local/bin/mhsendmail https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 && \
-    chmod +x /usr/local/bin/mhsendmail
+FROM wordpress:php8.5-apache
 
-ENV XDEBUG_VERSION 2.5.0
-ENV XDEBUG_SHA1 0d31602a6ee2ba6d2e18a6db79bdb9a2a706bcd9
+ARG XDEBUG_VERSION=3.5.3
 
-RUN set -x \
-	&& curl -SL "http://www.xdebug.org/files/xdebug-$XDEBUG_VERSION.tgz" -o xdebug.tgz \
-	&& echo "$XDEBUG_SHA1 xdebug.tgz" | sha1sum -c - \
-	&& mkdir -p /usr/src/xdebug \
-	&& tar -xf xdebug.tgz -C /usr/src/xdebug --strip-components=1 \
-	&& rm xdebug.* \
-	&& cd /usr/src/xdebug \
-	&& phpize \
-	&& ./configure --enable-xdebug \
-	&& make -j"$(nproc)" \
-	&& make install \
-	&& make clean
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# Install extra php extensions
-RUN apt-get update && \
-	apt-get install -y libcurl4-gnutls-dev && docker-php-ext-configure curl && docker-php-ext-install curl && \
-	apt-get install -y zlib1g-dev libicu-dev g++ && docker-php-ext-configure intl && docker-php-ext-install intl && \
-	apt-get install -y libxml++2.6-dev && docker-php-ext-install xml && \
-	apt-get install -y libmcrypt-dev && docker-php-ext-install mcrypt && \
-	docker-php-ext-install json && \
-	docker-php-ext-install mbstring && \
-	docker-php-ext-install soap && \
-	docker-php-ext-install zip
+# The official image already ships curl, gd, imagick, intl, mbstring, xml and
+# zip; only soap is missing.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libxml2-dev \
+    && docker-php-ext-install -j"$(nproc)" soap \
+    && pecl install "xdebug-${XDEBUG_VERSION}" \
+    && docker-php-ext-enable xdebug \
+    && rm -rf /tmp/pear \
+    && apt-get purge -y --auto-remove libxml2-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-VOLUME /var/www/html
+COPY xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
-COPY ./xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
-
-RUN echo 'sendmail_path="/usr/local/bin/mhsendmail --smtp-addr=mailhog:1025 --from=no-reply@docker.dev"' > /usr/local/etc/php/conf.d/mailhog.ini
+RUN curl --fail --location --output /usr/local/bin/mhsendmail https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 \
+    && chmod +x /usr/local/bin/mhsendmail \
+    && echo 'sendmail_path="/usr/local/bin/mhsendmail --smtp-addr=mailhog:1025 --from=no-reply@docker.dev"' > /usr/local/etc/php/conf.d/mailhog.ini
