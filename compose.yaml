@@ -13,10 +13,14 @@ services:
       - ./phpconf.ini:/usr/local/etc/php/conf.d/phpconf.ini
     environment:
       WORDPRESS_DB_HOST: db
-      WORDPRESS_DB_PASSWORD: docker
+      WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
+      WORDPRESS_DB_USER: ${DB_USER:-wordpress}
+      WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
     depends_on:
-      - mailhog
-      - db
+      mailhog:
+        condition: service_started
+      db:
+        condition: service_healthy
 
   mailhog:
     image: mailhog/mailhog
@@ -35,11 +39,24 @@ services:
     command: sh wp.sh
 
   db:
-    image: mysql:5.7
+    image: mariadb:lts
     ports:
-      - 3308:3306
+      - ${DB_PORT:-3308}:3306
+    volumes:
+      - db_data:/var/lib/mysql
     environment:
-      MYSQL_ROOT_PASSWORD: docker
+      MARIADB_DATABASE: ${DB_NAME:-wordpress}
+      MARIADB_USER: ${DB_USER:-wordpress}
+      MARIADB_PASSWORD: ${DB_PASSWORD:-wordpress}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-docker}
+    # Lets wordpress (and anything scripted right after `up -d`) wait for the
+    # first-run initialisation instead of racing it.
+    healthcheck:
+      test: [CMD, healthcheck.sh, --connect, --innodb_initialized]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
@@ -51,3 +68,6 @@ services:
       MYSQL_USERNAME: root
       MYSQL_ROOT_PASSWORD: docker
       MYSQL_PORT_3306_TCP_ADDR: db
+
+volumes:
+  db_data:
