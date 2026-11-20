@@ -7,11 +7,14 @@ FROM axllent/mailpit:${MAILPIT_VERSION} AS mailpit
 # captured too. Built with `target: cli` in compose.yaml.
 FROM wordpress:cli-php8.5 AS cli
 
-USER root
+USER 0
 COPY --from=mailpit /mailpit /usr/local/bin/mailpit
 RUN echo 'sendmail_path = "/usr/local/bin/mailpit sendmail -S mailpit:1025"' \
     > /usr/local/etc/php/conf.d/mailpit.ini
-USER www-data
+# Run as uid/gid 33, Apache's www-data in the Debian-based wordpress image,
+# so WP-CLI can write core, plugin and theme files. www-data in this Alpine
+# image is 82.
+USER 33:33
 
 # WordPress (Apache) - the default target, kept last so a plain
 # `docker build .` produces it.

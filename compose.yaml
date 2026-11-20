@@ -61,9 +61,6 @@ services:
     build:
       context: .
       target: cli
-    # Same uid/gid as Apache's www-data (33) in the wordpress image; the CLI
-    # image is Alpine, where www-data is 82 and could not write core files.
-    user: "33:33"
     # Keep these in sync with the wordpress service.
     volumes:
       - ./public:/var/www/html

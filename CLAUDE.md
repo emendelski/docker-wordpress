@@ -61,7 +61,7 @@ Read captured mail without a browser: `curl -s localhost:8025/api/v1/messages`.
 - **wp_mail() sender**: WordPress's default From is `wordpress@localhost`, which PHPMailer
   rejects ("Invalid address: (From)"). `mu-plugins/docker-mail.php` replaces an invalid sender
   with `wordpress@localhost.test`. Do not remove it or the `mu-plugins` mounts.
-- **WP-CLI user**: `wpcli` runs as uid/gid 33 (Apache's `www-data` in the Debian image). The CLI
+- **WP-CLI user**: the `cli` image runs as uid/gid 33 (Apache's `www-data` in the Debian image). The CLI
   image is Alpine, where `www-data` is 82 and could not write core files. No `--allow-root` or
   `--user root` is needed.
 - **No single-file bind mounts inside `./public`**: Docker Desktop (virtiofs) refuses to create
