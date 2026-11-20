@@ -85,15 +85,18 @@ services:
       start_period: 20s
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
+    image: phpmyadmin:5
     ports:
-      - 8181:80
-    restart: always
+      - ${PMA_PORT:-8181}:80
     environment:
-      MYSQL_USERNAME: root
-      MYSQL_ROOT_PASSWORD: docker
-      MYSQL_PORT_3306_TCP_ADDR: db
+      PMA_HOST: db
+      # Large enough to import a full site dump through the UI.
+      UPLOAD_LIMIT: 512M
+      MEMORY_LIMIT: 1G
+      MAX_EXECUTION_TIME: 1200
+    depends_on:
+      db:
+        condition: service_healthy
 
 volumes:
   db_data:
