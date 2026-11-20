@@ -1,3 +1,7 @@
+ARG MAILPIT_VERSION=v1.34
+
+FROM axllent/mailpit:${MAILPIT_VERSION} AS mailpit
+
 FROM wordpress:php8.5-apache
 
 ARG XDEBUG_VERSION=3.5.3
@@ -17,6 +21,9 @@ RUN apt-get update \
 
 COPY xdebug.ini /usr/local/etc/php/conf.d/xdebug.ini
 
-RUN curl --fail --location --output /usr/local/bin/mhsendmail https://github.com/mailhog/mhsendmail/releases/download/v0.2.0/mhsendmail_linux_amd64 \
-    && chmod +x /usr/local/bin/mhsendmail \
-    && echo 'sendmail_path="/usr/local/bin/mhsendmail --smtp-addr=mailhog:1025 --from=no-reply@docker.dev"' > /usr/local/etc/php/conf.d/mailhog.ini
+# Mailpit's sendmail mode delivers PHP mail() to the mailpit service. The
+# binary comes from the official multi-arch image, so it works on amd64 and
+# arm64 alike.
+COPY --from=mailpit /mailpit /usr/local/bin/mailpit
+RUN echo 'sendmail_path = "/usr/local/bin/mailpit sendmail -S mailpit:1025"' \
+    > /usr/local/etc/php/conf.d/mailpit.ini
