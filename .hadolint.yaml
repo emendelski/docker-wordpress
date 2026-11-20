@@ -1,0 +1,4 @@
+ignored:
+  # libxml2-dev is a build-only package removed in the same layer; pinning it
+  # would break with every Debian point release of the base image.
+  - DL3008

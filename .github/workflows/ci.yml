@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: hadolint/hadolint-action@v3.5.0
+        with:
+          dockerfile: Dockerfile
+
+      - name: Validate compose.yaml
+        run: docker compose config --quiet
+
+  smoke-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Start the stack
+        run: docker compose up --build --detach --wait wordpress
+
+      - name: Install WordPress with WP-CLI
+        run: |
+          docker compose run --rm -T wpcli wp core install \
+            --url=http://localhost:8080 --title=CI --admin_user=admin \
+            --admin_password=admin --admin_email=admin@example.test --skip-email
+          docker compose run --rm -T wpcli wp core version
+
+      - name: WordPress responds
+        run: curl --fail --silent --show-error --retry 5 --retry-all-errors http://localhost:8080/ > /dev/null
+
+      - name: PHP extensions and Xdebug are loaded
+        run: |
+          docker compose exec -T wordpress php -m | grep -x soap
+          docker compose exec -T wordpress php -r 'exit(extension_loaded("xdebug") ? 0 : 1);'
+
+      - name: Mail is captured by Mailpit
+        run: |
+          docker compose exec -T wordpress php -r 'exit(mail("ci@example.test", "CI mail", "Hello") ? 0 : 1);'
+          sleep 2
+          curl --fail --silent http://localhost:8025/api/v1/messages | grep -q '"Subject":"CI mail"'
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down --volumes
