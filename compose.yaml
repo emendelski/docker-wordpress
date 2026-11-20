@@ -1,16 +1,27 @@
-# Database connection shared by the wordpress and wpcli services.
-x-wordpress-db: &wordpress-db
+# WordPress configuration shared by the wordpress and wpcli services. The
+# image's wp-config.php reads these at runtime, so changes apply on restart.
+x-wordpress-env: &wordpress-env
   WORDPRESS_DB_HOST: db
   WORDPRESS_DB_NAME: ${DB_NAME:-wordpress}
   WORDPRESS_DB_USER: ${DB_USER:-wordpress}
   WORDPRESS_DB_PASSWORD: ${DB_PASSWORD:-wordpress}
+  # The image does define('WP_DEBUG', !!getenv_docker('WORDPRESS_DEBUG', '')):
+  # ANY non-empty value is truthy, including the literal "false". Leave it
+  # empty to disable debugging.
+  WORDPRESS_DEBUG: ${WORDPRESS_DEBUG-1}
+  # Read natively by wp_get_environment_type().
+  WP_ENVIRONMENT_TYPE: ${WP_ENVIRONMENT_TYPE:-local}
+  WORDPRESS_CONFIG_EXTRA: |
+    define('WP_DEBUG_LOG', true);
+    define('WP_HOME', 'http://localhost:${WP_PORT:-8080}');
+    define('WP_SITEURL', 'http://localhost:${WP_PORT:-8080}');
 
 services:
   wordpress:
     build:
       context: .
     ports:
-      - 8080:80
+      - ${WP_PORT:-8080}:80
     volumes:
       - ./public:/var/www/html
       - ./plugins:/var/www/html/wp-content/plugins
@@ -21,7 +32,7 @@ services:
       # Lets Xdebug reach the IDE on Linux hosts too (built in on Docker Desktop).
       - host.docker.internal:host-gateway
     environment:
-      <<: *wordpress-db
+      <<: *wordpress-env
       XDEBUG_MODE: ${XDEBUG_MODE:-debug}
     # Healthy once the entrypoint has copied WordPress core into ./public and
     # written wp-config.php, so wpcli can run against it.
@@ -57,7 +68,7 @@ services:
       - ./uploads:/var/www/html/wp-content/uploads
       - ./wp.sh:/usr/local/bin/wp.sh:ro
     environment:
-      <<: *wordpress-db
+      <<: *wordpress-env
       HOME: /tmp
     command: [sh, /usr/local/bin/wp.sh]
     depends_on:
