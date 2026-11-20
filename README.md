@@ -39,7 +39,9 @@ docker compose run --rm wpcli wp core install --url=http://localhost:8080 \
 | phpMyAdmin | http://localhost:8181                          |
 | MariaDB    | `localhost:3308`, user/password `wordpress`    |
 
-All ports and credentials can be changed in `.env` (see `.env.example`). Database credentials
+All ports and credentials can be changed in `.env` (see `.env.example`). Ports listen on
+`127.0.0.1` only; set `BIND_ADDRESS=0.0.0.0` to reach the services from other devices on your
+network. Database credentials
 apply when the `db_data` volume is first created; `docker compose down --volumes` removes the
 database.
 

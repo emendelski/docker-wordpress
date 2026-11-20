@@ -21,7 +21,7 @@ services:
     build:
       context: .
     ports:
-      - ${WP_PORT:-8080}:80
+      - ${BIND_ADDRESS:-127.0.0.1}:${WP_PORT:-8080}:80
     volumes:
       - ./public:/var/www/html
       - ./plugins:/var/www/html/wp-content/plugins
@@ -50,8 +50,8 @@ services:
   mailpit:
     image: axllent/mailpit:v1.34
     ports:
-      - ${MAILPIT_PORT:-8025}:8025
-      - ${MAILPIT_SMTP_PORT:-1025}:1025
+      - ${BIND_ADDRESS:-127.0.0.1}:${MAILPIT_PORT:-8025}:8025
+      - ${BIND_ADDRESS:-127.0.0.1}:${MAILPIT_SMTP_PORT:-1025}:1025
 
   # Runs ./wp.sh on every `docker compose up`, then exits. For one-off
   # commands: docker compose run --rm wpcli wp <command>
@@ -78,7 +78,7 @@ services:
   db:
     image: mariadb:lts
     ports:
-      - ${DB_PORT:-3308}:3306
+      - ${BIND_ADDRESS:-127.0.0.1}:${DB_PORT:-3308}:3306
     volumes:
       - db_data:/var/lib/mysql
     environment:
@@ -98,7 +98,7 @@ services:
   phpmyadmin:
     image: phpmyadmin:5
     ports:
-      - ${PMA_PORT:-8181}:80
+      - ${BIND_ADDRESS:-127.0.0.1}:${PMA_PORT:-8181}:80
     environment:
       PMA_HOST: db
       # Large enough to import a full site dump through the UI.
