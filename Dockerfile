@@ -2,7 +2,20 @@ ARG MAILPIT_VERSION=v1.34
 
 FROM axllent/mailpit:${MAILPIT_VERSION} AS mailpit
 
-FROM wordpress:php8.5-apache
+# WP-CLI with the same Mailpit sendmail setup as the web server, so mail sent
+# from the command line (wp_mail() in wp eval, cron runs, user commands) is
+# captured too. Built with `target: cli` in compose.yaml.
+FROM wordpress:cli-php8.5 AS cli
+
+USER root
+COPY --from=mailpit /mailpit /usr/local/bin/mailpit
+RUN echo 'sendmail_path = "/usr/local/bin/mailpit sendmail -S mailpit:1025"' \
+    > /usr/local/etc/php/conf.d/mailpit.ini
+USER www-data
+
+# WordPress (Apache) - the default target, kept last so a plain
+# `docker build .` produces it.
+FROM wordpress:php8.5-apache AS wordpress
 
 ARG XDEBUG_VERSION=3.5.3
 

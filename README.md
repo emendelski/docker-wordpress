@@ -56,12 +56,10 @@ The `wpcli` service runs as the same user as Apache (`www-data`, uid 33), so it 
 plugin and theme files. `wp.sh` runs in that container on every `docker compose up`: put
 commands that keep the project's dependencies in place there.
 
-Mail sent from WP-CLI itself is not captured; mail sent by WordPress in the browser is.
-
 ## Mail
 
 PHP `mail()` and `wp_mail()` are delivered to [Mailpit](https://mailpit.axllent.org/) instead of
-real recipients. Open http://localhost:8025 to read them.
+real recipients, both from the site and from WP-CLI. Open http://localhost:8025 to read them.
 
 ## Xdebug
 
@@ -100,6 +98,7 @@ docker compose run --rm wpcli wp core update-db
 - `themes/` – project themes, mounted as `wp-content/themes/`
 - `uploads/` – media, mounted as `wp-content/uploads/`
 - `compose.yaml` – services and configuration
-- `Dockerfile` – WordPress image with soap, Xdebug and Mailpit's sendmail
+- `Dockerfile` – WordPress image with soap, Xdebug and Mailpit's sendmail (`wordpress` target)
+  and the WP-CLI image with the same sendmail setup (`cli` target)
 - `phpconf.ini`, `xdebug.ini` – PHP and Xdebug settings
 - `wp.sh` – WP-CLI commands run on every `docker compose up`
